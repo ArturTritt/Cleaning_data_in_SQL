@@ -18,7 +18,7 @@ select
 		when LOWER(order_status) like '%returned%' then 'Returned'
 		when LOWER(order_status) like '%refunded%' then 'Refunded'
 else 'Other'
-end  as Cleaned_order_status
+end  as cleaned_order_status
 from customer_orders co; 
 
 -- 3. standardise product name column
@@ -32,7 +32,7 @@ select
 		when LOWER(product_name) like '%Macbook Pro%' then 'Macbook Pro'
 		when LOWER(product_name) like '%iPhone 14%' then 'iPhone 14'		
 else 'Other'
-end  as Clean_product_name
+end  as clean_product_name
 from customer_orders co; 
 
 -- 4. clean quantity field
@@ -42,14 +42,14 @@ select
 		when LOWER(quantity) = 'one' then 1
 		when LOWER(quantity) = 'two' then 2
 		else CAST(quantity as float)
-end as Clean_quantity
+end as clean_quantity
 from customer_orders co; 
 
 -- 5. clean customer_name field 
 
 select
 	customer_name
-	,UPPER(customer_name) AS Standardized_name
+	,UPPER(customer_name) AS standardized_name
 from customer_orders co
 where customer_name is not NULL;
 
@@ -57,7 +57,7 @@ where customer_name is not NULL;
 select
 	order_date
 	,DATE_FORMAT
-		(order_date, '%d/%m/%Y') AS Standardized_date
+		(order_date, '%d/%m/%Y') AS standardized_date
 from customer_orders co
 
 -- 7. remove duplicated orders
@@ -81,7 +81,7 @@ update customer_orders
 -- 9. standardise price column
 select
 	price 
-	,cast(price as decimal) as Clean_price  
+	,cast(price as decimal) as clean_price  
 from customer_orders
 
 -- 10. standardise country column
@@ -105,7 +105,7 @@ cleaned_data as
 	 select
 	 	order_id
 		-- clean customer_name
-	 	,UPPER(customer_name)				AS Standardized_name
+	 	,UPPER(customer_name)				AS standardized_name
 		-- standarize order_status
 		,email 
 		,case 
@@ -114,7 +114,7 @@ cleaned_data as
 			when LOWER(order_status) like '%returned%' then 'Returned'
 			when LOWER(order_status) like '%refunded%' then 'Refunded'
 		else 'Other'
-		end									AS Clean_order_status
+		end									AS clean_order_status
 		-- standarize product_name 
 		,case 
 			when LOWER(product_name) like '%Apple Watch%' then 'Apple Watch'
@@ -123,7 +123,7 @@ cleaned_data as
 			when LOWER(product_name) like '%Macbook Pro%' then 'Macbook Pro'
 			when LOWER(product_name) like '%iPhone 14%' then 'iPhone 14'		
 		else 'Other'
-		end  								AS Clean_product_name
+		end  								AS clean_product_name
 		-- clean quantity 
 		,case 
 			when LOWER(quantity) = 'one' then 1
@@ -131,7 +131,7 @@ cleaned_data as
 			else CAST(quantity as float)
 		end as clean_quantity
 		-- standardise date format
-		,DATE_FORMAT(order_date, '%d/%m/%Y') AS Standardized_date
+		,DATE_FORMAT(order_date, '%d/%m/%Y') AS standardized_date
 	 	-- standardise price column
 		,cast(price as decimal) as clean_price  
 		-- standardise country column
@@ -150,7 +150,7 @@ deduplicated_data as
 	 	select
 		*
 		,row_number() over(
-		partition by LOWER(email), LOWER(Clean_product_name)
+		partition by LOWER(email), LOWER(clean_product_name)
 		) as rn
 		from cleaned_data
 	 	),
