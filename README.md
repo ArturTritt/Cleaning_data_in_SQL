@@ -36,3 +36,6 @@ Subqueries (SELECT * FROM (SELECT...)):
 
 **Final Result:**
 The final result is a clean, well-structured dataset where each order is unique, all values are standardised, and data types are correctly formatted. This processed data is now ready for direct use in a Business Intelligence tool like Power BI to create accurate reports and dashboards.
+
+<img width="1444" height="208" alt="image" src="https://github.com/user-attachments/assets/1506cdaa-77cc-4d04-83b2-fd1445547fdd" />
+
