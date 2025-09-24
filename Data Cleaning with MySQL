@@ -40,6 +40,7 @@ select
 	quantity
 	,case 
 		when LOWER(quantity) = 'one' then 1
+		when LOWER(quantity) = 'two' then 2
 		else CAST(quantity as float)
 end as Clean_quantity
 from customer_orders co; 
@@ -126,6 +127,7 @@ cleaned_data as
 		-- clean quantity 
 		,case 
 			when LOWER(quantity) = 'one' then 1
+			when LOWER(quantity) = 'two' then 2
 			else CAST(quantity as float)
 		end as clean_quantity
 		-- standardise date format
