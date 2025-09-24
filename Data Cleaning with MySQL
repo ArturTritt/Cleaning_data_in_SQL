@@ -1,0 +1,163 @@
+-- all data_set
+
+SELECT *	
+FROM customer_orders;
+
+-- 1. standardise order_id column
+
+alter table customer_orders 
+modify column order_id INT
+
+-- 2. standardise the order _status column
+
+select
+	order_status
+	,case 
+		when LOWER(order_status) like '%delivered%' then 'Delivered'
+		when LOWER(order_status) like '%pending%' then 'Pending'
+		when LOWER(order_status) like '%returned%' then 'Returned'
+		when LOWER(order_status) like '%refunded%' then 'Refunded'
+else 'Other'
+end  as Cleaned_order_status
+from customer_orders co; 
+
+-- 3. standardise product name column
+
+select
+	product_name
+	,case 
+		when LOWER(product_name) like '%Apple Watch%' then 'Apple Watch'
+		when LOWER(product_name) like '%Google Pixel%' then 'Google Pixel'
+		when LOWER(product_name) like '%Samsung Galaxy S22%' then 'Samsung Galaxy S22'
+		when LOWER(product_name) like '%Macbook Pro%' then 'Macbook Pro'
+		when LOWER(product_name) like '%iPhone 14%' then 'iPhone 14'		
+else 'Other'
+end  as Clean_product_name
+from customer_orders co; 
+
+-- 4. clean quantity field
+select
+	quantity
+	,case 
+		when LOWER(quantity) = 'one' then 1
+		else CAST(quantity as float)
+end as Clean_quantity
+from customer_orders co; 
+
+-- 5. clean customer_name field 
+
+select
+	customer_name
+	,UPPER(customer_name) AS Standardized_name
+from customer_orders co
+where customer_name is not NULL;
+
+-- 6. standardise date (try ISO first, then US)
+select
+	order_date
+	,DATE_FORMAT
+		(order_date, '%d/%m/%Y') AS Standardized_date
+from customer_orders co
+
+-- 7. remove duplicated orders
+
+select*
+from
+	(
+	select
+		*
+		,row_number() over(
+		partition by LOWER(email), LOWER(product_name)) as rn
+		from customer_orders co 
+	) nt
+where rn = 1
+order by 1;
+
+-- 8. standardise price column 
+update customer_orders
+	set price = REPLACE(price, '$', '');
+
+-- 9. standardise price column
+select
+	price 
+	,cast(price as decimal) as Clean_price  
+from customer_orders
+
+-- 10. standardise country column
+select
+	country
+	,case
+		when(country) in ('United Kingdom','UK') then 'United Kingdom'
+		when(country) in ('USA','United States','US') then 'United States'
+		when(country) = 'Parkistan' then 'Parkistan'
+		when(country) in ('Canada','CANADA') then 'Canada'
+		when(country) ='Spain' then 'Spain'
+	end as country_s
+from customer_orders;
+
+
+-- 11. final clean data
+
+with
+cleaned_data as 
+ 	(
+	 select
+	 	order_id
+		-- clean customer_name
+	 	,UPPER(customer_name)				AS Standardized_name
+		-- standarize order_status
+		,email 
+		,case 
+			when LOWER(order_status) like '%delivered%' then 'Delivered'
+			when LOWER(order_status) like '%pending%' then 'Pending'
+			when LOWER(order_status) like '%returned%' then 'Returned'
+			when LOWER(order_status) like '%refunded%' then 'Refunded'
+		else 'Other'
+		end									AS Clean_order_status
+		-- standarize product_name 
+		,case 
+			when LOWER(product_name) like '%Apple Watch%' then 'Apple Watch'
+			when LOWER(product_name) like '%Google Pixel%' then 'Google Pixel'
+			when LOWER(product_name) like '%Samsung Galaxy S22%' then 'Samsung Galaxy S22'
+			when LOWER(product_name) like '%Macbook Pro%' then 'Macbook Pro'
+			when LOWER(product_name) like '%iPhone 14%' then 'iPhone 14'		
+		else 'Other'
+		end  								AS Clean_product_name
+		-- clean quantity 
+		,case 
+			when LOWER(quantity) = 'one' then 1
+			else CAST(quantity as float)
+		end as clean_quantity
+		-- standardise date format
+		,DATE_FORMAT(order_date, '%d/%m/%Y') AS Standardized_date
+	 	-- standardise price column
+		,cast(price as decimal) as clean_price  
+		-- standardise country column
+	 	,case
+			when (country) in ('United Kingdom','UK') then 'United Kingdom'
+			when (country) in ('USA','United States','US') then 'United States'
+			when (country) = 'Pakistan' then 'Pakistan'
+			when (country) in ('Canada','CANADA') then 'Canada'
+			when (country) = 'Spain' then 'Spain'
+			else country
+		end as country_s
+		from customer_orders
+		 ),
+deduplicated_data as 
+	 	(
+	 	select
+		*
+		,row_number() over(
+		partition by LOWER(email), LOWER(Clean_product_name)
+		) as rn
+		from cleaned_data
+	 	),
+final_table as 
+		(
+select *
+from deduplicated_data
+where rn = 1
+order by order_id
+ 		)
+ select * 
+ from final_table;
